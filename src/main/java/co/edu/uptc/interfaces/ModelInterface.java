@@ -3,8 +3,6 @@ package co.edu.uptc.interfaces;
 import co.edu.uptc.dto.GameSnapshot;
 
 public interface ModelInterface {
-    String exec() throws Exception;
-
     void resetGame();
 
     void addBalls(int count);

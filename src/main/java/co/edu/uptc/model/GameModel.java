@@ -20,7 +20,7 @@ public class GameModel implements ModelInterface {
     private static final int CENTER_X = GRID_WIDTH / 2;
     private static final int CENTER_Y = GRID_HEIGHT / 2;
     private static final int MIN_SPEED_MS = 5;
-    private static final int BALL_DELAY_STEP_MS = 20;
+    private static final int BALL_DELAY_STEP_MS = 1200;
 
     private final List<BallState> balls = new ArrayList<>();
     private final Object stateLock = new Object();
@@ -34,11 +34,6 @@ public class GameModel implements ModelInterface {
     private int ballDelayIndex;
     private LocalTime startTime;
     private Duration elapsedAtStop = Duration.ZERO;
-
-    @Override
-    public String exec() {
-        return "OK";
-    }
 
     @Override
     public void resetGame() {
