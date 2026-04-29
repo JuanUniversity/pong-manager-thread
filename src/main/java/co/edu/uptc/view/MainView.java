@@ -5,12 +5,10 @@ import co.edu.uptc.dto.GameSnapshot;
 import co.edu.uptc.interfaces.PresenterInterface;
 import co.edu.uptc.interfaces.ViewInterface;
 import co.edu.uptc.util.TimeFormatter;
+import co.edu.uptc.view.util.UIConstants;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -27,42 +25,18 @@ import javax.swing.UIManager;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.function.Consumer;
 
 public class MainView extends JFrame implements ViewInterface {
-    private static final int UI_REFRESH_MS = 30;
-    private static final int PADDLE_STEP = 1;
-    private static final int INFO_PANEL_WIDTH = 250;
-
-
-    private static final Color RESET_BG = new Color(0x55958D);
-
+    private static final PropertiesManager PROPERTIES = PropertiesManager.getInstance();
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    private static final PropertiesManager PROPERTIES = PropertiesManager.getInstance();
-
-    private static final String KEY_APP_TITLE = "app.title";
-    private static final String KEY_PANEL_TITLE = "panel.title";
-    private static final String KEY_LABEL_BOUNCES = "label.bounces";
-    private static final String KEY_LABEL_START = "label.startTime";
-    private static final String KEY_LABEL_ELAPSED = "label.elapsed";
-    private static final String KEY_BUTTON_RESET = "button.reset";
-    private static final String KEY_MENU_MAIN = "menu.main";
-    private static final String KEY_MENU_SPEED = "menu.speed";
-    private static final String KEY_MENU_BALLS = "menu.balls";
-    private static final String KEY_MENU_BALLS_1 = "menu.balls.1";
-    private static final String KEY_MENU_BALLS_2 = "menu.balls.2";
-    private static final String KEY_MENU_BALLS_3 = "menu.balls.3";
-    private static final String KEY_MENU_SPEED_SLOW = "menu.speed.slow";
-    private static final String KEY_MENU_SPEED_MEDIUM = "menu.speed.medium";
-    private static final String KEY_MENU_SPEED_FAST = "menu.speed.fast";
+    private static final UIConstants UI = new UIConstants();
 
     private PresenterInterface presenter;
     private BoardPanel boardPanel;
@@ -96,7 +70,7 @@ public class MainView extends JFrame implements ViewInterface {
     }
 
     private void configureFrame() {
-        setTitle(PROPERTIES.getMessage(KEY_APP_TITLE));
+        setTitle(PROPERTIES.getMessage("app.title"));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
     }
@@ -142,48 +116,48 @@ public class MainView extends JFrame implements ViewInterface {
     }
 
     private JPanel buildInfoPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(18, 16, 18, 16));
-        panel.setPreferredSize(new Dimension(INFO_PANEL_WIDTH,
-                boardPanel.getPreferredSize().height));
+        Dimension infoPanelSize = new Dimension(UI.INFO_PANEL_WIDTH,
+                boardPanel.getPreferredSize().height);
+                
         bounceValue = createValueLabel("0");
         startValue = createValueLabel("--:--:--");
         elapsedValue = createValueLabel("00:00");
-        panel.add(buildInfoHeader(), BorderLayout.NORTH);
-        panel.add(buildInfoCenter(), BorderLayout.CENTER);
-        panel.add(buildInfoFooter(), BorderLayout.SOUTH);
-        return panel;
+        return new PanelBuilder(new BorderLayout())
+                .setBorder(UI.INFO_PADDING, UI.INFO_PADDING,
+                        UI.INFO_PADDING, UI.INFO_PADDING)
+                .setPreferredSize(infoPanelSize)
+                .add(buildInfoHeader(), BorderLayout.NORTH)
+                .add(buildInfoCenter(), BorderLayout.CENTER)
+                .add(buildInfoFooter(), BorderLayout.SOUTH)
+                .build();
     }
 
     private JPanel buildInfoHeader() {
-        JPanel header = new JPanel();
-        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
-        header.add(buildInfoTitle());
-        header.add(Box.createVerticalStrut(16));
-        return header;
+        return new PanelBuilder()
+                .add(buildInfoTitle())
+                .addSpacing(16)
+                .build();
     }
 
     private JPanel buildInfoCenter() {
-        JPanel center = new JPanel();
-        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
-        center.add(buildInfoRow(PROPERTIES.getMessage(KEY_LABEL_BOUNCES), bounceValue));
-        center.add(Box.createVerticalStrut(12));
-        center.add(buildInfoRow(PROPERTIES.getMessage(KEY_LABEL_START), startValue));
-        center.add(Box.createVerticalStrut(12));
-        center.add(buildInfoRow(PROPERTIES.getMessage(KEY_LABEL_ELAPSED), elapsedValue));
-        center.add(Box.createVerticalGlue());
-        return center;
+        return new PanelBuilder()
+                .add(buildInfoRow(PROPERTIES.getMessage("label.bounces"), bounceValue))
+                .addSpacing(12)
+                .add(buildInfoRow(PROPERTIES.getMessage("label.startTime"), startValue))
+                .addSpacing(12)
+                .add(buildInfoRow(PROPERTIES.getMessage("label.elapsed"), elapsedValue))
+                .addGlue()
+                .build();
     }
 
     private JPanel buildInfoFooter() {
-        JPanel footer = new JPanel();
-        footer.setLayout(new BoxLayout(footer, BoxLayout.Y_AXIS));
-        footer.add(buildResetButton());
-        return footer;
+        return new PanelBuilder()
+                .add(buildResetButton())
+                .build();
     }
 
     private JLabel buildInfoTitle() {
-        JLabel title = new JLabel(PROPERTIES.getMessage(KEY_PANEL_TITLE));
+        JLabel title = new JLabel(PROPERTIES.getMessage("panel.title"));
         title.setAlignmentX(LEFT_ALIGNMENT);
         Font baseFont = title.getFont();
         if (baseFont != null) {
@@ -195,7 +169,7 @@ public class MainView extends JFrame implements ViewInterface {
     private JPanel buildInfoRow(String label, JLabel value) {
         JPanel row = new JPanel(new BorderLayout());
         row.setAlignmentX(LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(INFO_PANEL_WIDTH - 32, 48));
+        row.setMaximumSize(new Dimension(UI.INFO_PANEL_WIDTH - 32, 48));
         JLabel title = new JLabel(label);
         row.add(title, BorderLayout.NORTH);
         row.add(value, BorderLayout.SOUTH);
@@ -203,26 +177,25 @@ public class MainView extends JFrame implements ViewInterface {
     }
 
     private JLabel createValueLabel(String text) {
-        JLabel label = new JLabel(text);
-        return label;
+        return new JLabel(text);
     }
 
     private JButton buildResetButton() {
-        JButton button = new JButton(PROPERTIES.getMessage(KEY_BUTTON_RESET));
-        button.setBackground(RESET_BG);
+        JButton button = new JButton(PROPERTIES.getMessage("button.reset"));
+        button.setBackground(UI.RESET_BG);
         button.setFocusPainted(false);
         button.setBorderPainted(false);
         button.setOpaque(true);
         button.setAlignmentX(CENTER_ALIGNMENT);
-        button.setMaximumSize(new Dimension(180, 36));
-        button.setPreferredSize(new Dimension(180, 36));
+        button.setMaximumSize(UI.BUTTON_SIZE);
+        button.setPreferredSize(UI.BUTTON_SIZE);
         button.addActionListener(event -> presenter.onReset());
         return button;
     }
 
     private JMenuBar buildMenuBar() {
         JMenuBar bar = new JMenuBar();
-        JMenu menu = new JMenu(PROPERTIES.getMessage(KEY_MENU_MAIN));
+        JMenu menu = new JMenu(PROPERTIES.getMessage("menu.main"));
         menu.add(buildSpeedMenu());
         menu.add(buildBallMenu());
         bar.add(menu);
@@ -230,58 +203,59 @@ public class MainView extends JFrame implements ViewInterface {
     }
 
     private JMenu buildSpeedMenu() {
-        JMenu menu = new JMenu(PROPERTIES.getMessage(KEY_MENU_SPEED));
-        addSpeedItem(menu, PROPERTIES.getMessage(KEY_MENU_SPEED_SLOW, 90), 90);
-        addSpeedItem(menu, PROPERTIES.getMessage(KEY_MENU_SPEED_MEDIUM, 60), 60);
-        addSpeedItem(menu, PROPERTIES.getMessage(KEY_MENU_SPEED_FAST, 40), 40);
+        JMenu menu = new JMenu(PROPERTIES.getMessage("menu.speed"));
+        addMenuItem(menu, PROPERTIES.getMessage("menu.speed.slow", 90), 90,
+                presenter::onSpeedChange);
+        addMenuItem(menu, PROPERTIES.getMessage("menu.speed.medium", 60), 60,
+                presenter::onSpeedChange);
+        addMenuItem(menu, PROPERTIES.getMessage("menu.speed.fast", 40), 40,
+                presenter::onSpeedChange);
         return menu;
-    }
-
-    private void addSpeedItem(JMenu menu, String label, int speedMs) {
-        JMenuItem item = new JMenuItem(label);
-        item.addActionListener(event -> presenter.onSpeedChange(speedMs));
-        menu.add(item);
     }
 
     private JMenu buildBallMenu() {
-        JMenu menu = new JMenu(PROPERTIES.getMessage(KEY_MENU_BALLS));
-        addBallItem(menu, PROPERTIES.getMessage(KEY_MENU_BALLS_1), 1);
-        addBallItem(menu, PROPERTIES.getMessage(KEY_MENU_BALLS_2), 2);
-        addBallItem(menu, PROPERTIES.getMessage(KEY_MENU_BALLS_3), 3);
+        JMenu menu = new JMenu(PROPERTIES.getMessage("menu.balls"));
+        addMenuItem(menu, PROPERTIES.getMessage("menu.balls.1"), 1,
+                presenter::onBallCountChange);
+        addMenuItem(menu, PROPERTIES.getMessage("menu.balls.2"), 2,
+                presenter::onBallCountChange);
+        addMenuItem(menu, PROPERTIES.getMessage("menu.balls.3"), 3,
+                presenter::onBallCountChange);
         return menu;
     }
 
-    private void addBallItem(JMenu menu, String label, int count) {
+    private <T> void addMenuItem(JMenu menu, String label, T value, Consumer<T> action) {
         JMenuItem item = new JMenuItem(label);
-        item.addActionListener(event -> presenter.onBallCountChange(count));
+        item.addActionListener(e -> action.accept(value));
         menu.add(item);
     }
 
     private void bindKeys() {
-        InputMap inputMap = boardPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actionMap = boardPanel.getActionMap();
-        registerMoveAction(inputMap, actionMap, "moveUp", KeyEvent.VK_UP, -PADDLE_STEP);
-        registerMoveAction(inputMap, actionMap, "moveDown", KeyEvent.VK_DOWN, PADDLE_STEP);
+        registerKeyAction("moveUp", KeyEvent.VK_UP, -UI.PADDLE_STEP);
+        registerKeyAction("moveDown", KeyEvent.VK_DOWN, UI.PADDLE_STEP);
     }
 
-    private void registerMoveAction(InputMap inputMap, ActionMap actionMap,
-            String name, int keyCode, int delta) {
+    private void registerKeyAction(String name, int keyCode, int delta) {
+        InputMap inputMap = boardPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = boardPanel.getActionMap();
+
         String pressName = name + "Pressed";
         String releaseName = name + "Released";
+
         inputMap.put(KeyStroke.getKeyStroke(keyCode, 0, false), pressName);
         inputMap.put(KeyStroke.getKeyStroke(keyCode, 0, true), releaseName);
-        actionMap.put(pressName, new AbstractAction() {
+
+        actionMap.put(pressName, createKeyAction(delta, true));
+        actionMap.put(releaseName, createKeyAction(delta, false));
+    }
+
+    private AbstractAction createKeyAction(int delta, boolean pressed) {
+        return new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                setKeyState(delta, true);
+                setKeyState(delta, pressed);
             }
-        });
-        actionMap.put(releaseName, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setKeyState(delta, false);
-            }
-        });
+        };
     }
 
     private void setKeyState(int delta, boolean pressed) {
@@ -299,10 +273,10 @@ public class MainView extends JFrame implements ViewInterface {
     private void updatePaddleVelocity() {
         int velocity = 0;
         if (upPressed) {
-            velocity -= PADDLE_STEP;
+            velocity -= UI.PADDLE_STEP;
         }
         if (downPressed) {
-            velocity += PADDLE_STEP;
+            velocity += UI.PADDLE_STEP;
         }
         paddleVelocity = velocity;
     }
@@ -314,7 +288,7 @@ public class MainView extends JFrame implements ViewInterface {
     }
 
     private void startTimer() {
-        uiTimer = new Timer(UI_REFRESH_MS, event -> refreshUi());
+        uiTimer = new Timer(UI.REFRESH_MS, event -> refreshUi());
         uiTimer.start();
     }
 
