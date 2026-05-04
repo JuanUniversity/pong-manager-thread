@@ -83,7 +83,7 @@ public class BoardPanel extends JPanel {
         int x = toPixels(unitX) - ((sizeUnits - 1) * SCALE);
         int y = toPixels(unitY) - ((sizeUnits - 1) * SCALE);
         g2.setColor(color);
-        g2.fillRect(Math.max(0, x), Math.max(0, y), size, size);
+        g2.fillOval(Math.max(0, x), Math.max(0, y), size, size);
     }
 
     private int toPixels(int unit) {
