@@ -10,4 +10,5 @@ public class BallSnapshot {
     private final int y;
     private final int oldX;
     private final int oldY;
+    private final int racketCollisions;
 }

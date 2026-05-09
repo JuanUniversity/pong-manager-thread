@@ -111,15 +111,33 @@ public class GameModel implements ModelInterface {
         int nextY = resolveVertical(y, dy);
         dy = resolveVerticalDirection(y, dy);
         int nextX = x + dx;
+
         int resolvedDx = resolveHorizontal(nextX, nextY, dx);
+        if (isPaddleHit(nextX,nextY, dx)) {
+            int racketCollisions = ball.getRacketCollisions() + 1;
+            ball.setRacketCollisions(racketCollisions);
+            System.out.println(racketCollisions);
+        }
         nextX = x + resolvedDx;
         if (nextX >= GRID_WIDTH) {
             ball.advanceTo(GRID_WIDTH - 1, nextY);
             stopAllBalls();
             return;
         }
+
+
+        if (isFinalPaddleHit(nextX, nextY, ball)) {
+            ball.deactivate();
+            return;
+        }
+
         ball.setDirection(resolvedDx, dy);
         ball.advanceTo(nextX, nextY);
+
+    }
+
+    private boolean isFinalPaddleHit(int nextX, int nextY, BallState ball) {
+        return isPaddleHit(nextX, nextY, ball.getDx()) && balls.size() > 1 && ball.getRacketCollisions() > 2;
     }
 
     private int resolveVertical(int y, int dy) {
@@ -171,7 +189,7 @@ public class GameModel implements ModelInterface {
 
     private BallState createBall() {
         int dy = random.nextBoolean() ? 1 : -1;
-        return new BallState(CENTER_X, CENTER_Y, -1, dy);
+        return new BallState(CENTER_X, CENTER_Y, -1, dy, 0);
     }
 
     private void addBall(BallState ball) {

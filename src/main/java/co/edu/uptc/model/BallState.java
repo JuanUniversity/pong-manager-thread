@@ -9,9 +9,11 @@ public class BallState {
     private int oldY;
     private int dx;
     private int dy;
+    private int racketCollisions;
+    
     private boolean active;
-
-    public BallState(int x, int y, int dx, int dy) {
+    
+    public BallState(int x, int y, int dx, int dy, int racketCollisions) {
         this.x = x;
         this.y = y;
         this.oldX = x;
@@ -20,7 +22,7 @@ public class BallState {
         this.dy = dy;
         this.active = true;
     }
-
+    
     public synchronized int getX() {
         return x;
     }
@@ -28,18 +30,26 @@ public class BallState {
     public synchronized int getY() {
         return y;
     }
-
+    
     public synchronized int getDx() {
         return dx;
     }
-
+    
     public synchronized int getDy() {
         return dy;
+    }
+    
+    public synchronized int getRacketCollisions() {
+        return racketCollisions;
     }
 
     public synchronized void setDirection(int dx, int dy) {
         this.dx = dx;
         this.dy = dy;
+    }
+
+    public synchronized void setRacketCollisions(int racketCollisions) {
+        this.racketCollisions = racketCollisions;
     }
 
     public synchronized void advanceTo(int newX, int newY) {
@@ -50,7 +60,7 @@ public class BallState {
     }
 
     public synchronized BallSnapshot snapshot() {
-        return new BallSnapshot(x, y, oldX, oldY);
+        return new BallSnapshot(x, y, oldX, oldY, racketCollisions);
     }
 
     public synchronized boolean isActive() {
