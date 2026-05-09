@@ -351,10 +351,10 @@ public class MainView extends JFrame implements ViewInterface {
         }
         applyPaddleMovement();
         GameSnapshot snapshot = presenter.getSnapshot();
-        handleLoss(snapshot);
         boardPanel.setSnapshot(snapshot);
         updateLabels(snapshot);
         boardPanel.repaint();
+        handleLoss(snapshot);
     }
 
     private void handleLoss(GameSnapshot snapshot) {
