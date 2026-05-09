@@ -11,6 +11,8 @@ public interface PresenterInterface {
 
     void onBallCountChange(int count);
 
+    void onAddBall();
+
     void onSpeedChange(int speedMs);
 
     void onIncreaseSpeed();

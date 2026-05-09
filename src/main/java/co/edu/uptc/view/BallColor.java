@@ -1,6 +1,7 @@
-package co.edu.uptc.dto;
+package co.edu.uptc.view;
 
 import java.awt.Color;
+import java.util.Random;
 
 public enum BallColor {
     CYAN(new Color(0x66D0E6), new Color(0x2D7E9C)),
@@ -22,5 +23,10 @@ public enum BallColor {
 
     public Color getTrail() {
         return trail;
+    }
+
+    public static BallColor random(Random random) {
+        BallColor[] values = values();
+        return values[random.nextInt(values.length)];
     }
 }

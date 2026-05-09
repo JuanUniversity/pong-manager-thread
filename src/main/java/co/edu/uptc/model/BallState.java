@@ -1,11 +1,9 @@
 package co.edu.uptc.model;
 
-import co.edu.uptc.dto.BallColor;
 import co.edu.uptc.dto.BallSnapshot;
 
 public class BallState {
     private final int id;
-    private final BallColor color;
     private int x;
     private int y;
     private int oldX;
@@ -13,12 +11,11 @@ public class BallState {
     private int dx;
     private int dy;
     private int bounceCount;
-    
+
     private boolean active;
-    
-    public BallState(int id, int x, int y, int dx, int dy, BallColor color) {
+
+    public BallState(int id, int x, int y, int dx, int dy) {
         this.id = id;
-        this.color = color;
         this.x = x;
         this.y = y;
         this.oldX = x;
@@ -32,10 +29,6 @@ public class BallState {
         return id;
     }
 
-    public synchronized BallColor getColor() {
-        return color;
-    }
-    
     public synchronized int getX() {
         return x;
     }
@@ -43,15 +36,15 @@ public class BallState {
     public synchronized int getY() {
         return y;
     }
-    
+
     public synchronized int getDx() {
         return dx;
     }
-    
+
     public synchronized int getDy() {
         return dy;
     }
-    
+
     public synchronized int getBounceCount() {
         return bounceCount;
     }
@@ -73,7 +66,7 @@ public class BallState {
     }
 
     public synchronized BallSnapshot snapshot() {
-        return new BallSnapshot(id, x, y, oldX, oldY, color, bounceCount);
+        return new BallSnapshot(id, x, y, oldX, oldY, bounceCount);
     }
 
     public synchronized boolean isActive() {

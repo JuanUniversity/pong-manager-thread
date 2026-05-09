@@ -10,6 +10,7 @@ import co.edu.uptc.view.util.UIConstants;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
+import javax.swing.BoxLayout;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -19,6 +20,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -34,7 +36,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class MainView extends JFrame implements ViewInterface {
     private static final PropertiesManager PROPERTIES = PropertiesManager.getInstance();
@@ -51,6 +52,7 @@ public class MainView extends JFrame implements ViewInterface {
     private boolean upPressed;
     private boolean downPressed;
     private int paddleVelocity;
+    private boolean lastRunning = true;
 
     @Override
     public void setPresenter(PresenterInterface presenter) {
@@ -122,7 +124,7 @@ public class MainView extends JFrame implements ViewInterface {
     private JPanel buildInfoPanel() {
         Dimension infoPanelSize = new Dimension(UI.INFO_PANEL_WIDTH,
                 boardPanel.getPreferredSize().height);
-                
+
         startValue = createValueLabel("--:--:--");
         elapsedValue = createValueLabel("00:00:00");
         return new PanelBuilder(new BorderLayout())
@@ -151,6 +153,12 @@ public class MainView extends JFrame implements ViewInterface {
                 .add(buildInfoRow(PROPERTIES.getMessage("label.startTime"), startValue))
                 .addSpacing(12)
                 .add(buildInfoRow(PROPERTIES.getMessage("label.elapsed"), elapsedValue))
+                .addSpacing(12)
+                .add(buildSectionTitle(PROPERTIES.getMessage("label.controls")))
+                .add(buildControlLine(PROPERTIES.getMessage("label.control.move")))
+                .add(buildControlLine(PROPERTIES.getMessage("label.control.speed")))
+                .add(buildControlLine(PROPERTIES.getMessage("label.control.pause")))
+                .add(buildControlLine(PROPERTIES.getMessage("label.control.addball")))
                 .addGlue()
                 .build();
     }
@@ -166,6 +174,12 @@ public class MainView extends JFrame implements ViewInterface {
         JLabel title = new JLabel(text);
         title.setAlignmentX(LEFT_ALIGNMENT);
         return title;
+    }
+
+    private JLabel buildControlLine(String text) {
+        JLabel label = new JLabel(text);
+        label.setAlignmentX(LEFT_ALIGNMENT);
+        return label;
     }
 
     private JPanel buildInfoFooter() {
@@ -213,47 +227,16 @@ public class MainView extends JFrame implements ViewInterface {
 
     private JMenuBar buildMenuBar() {
         JMenuBar bar = new JMenuBar();
-        JMenu menu = new JMenu(PROPERTIES.getMessage("menu.main"));
-        menu.add(buildSpeedMenu());
-        menu.add(buildBallMenu());
-        menu.addSeparator();
-        menu.add(buildPauseItem());
-        bar.add(menu);
+        JMenu aboutMenu = new JMenu(PROPERTIES.getMessage("menu.about"));
+        aboutMenu.add(buildAboutItem());
+        bar.add(aboutMenu);
         return bar;
     }
 
-    private JMenuItem buildPauseItem() {
-        JMenuItem item = new JMenuItem(PROPERTIES.getMessage("menu.pause"));
-        item.addActionListener(event -> togglePause());
+    private JMenuItem buildAboutItem() {
+        JMenuItem item = new JMenuItem(PROPERTIES.getMessage("menu.about.author"));
+        item.addActionListener(event -> showAboutDialog());
         return item;
-    }
-
-    private JMenu buildSpeedMenu() {
-        JMenu menu = new JMenu(PROPERTIES.getMessage("menu.speed"));
-        addMenuItem(menu, PROPERTIES.getMessage("menu.speed.slow", 90), 90,
-                presenter::onSpeedChange);
-        addMenuItem(menu, PROPERTIES.getMessage("menu.speed.medium", 60), 60,
-                presenter::onSpeedChange);
-        addMenuItem(menu, PROPERTIES.getMessage("menu.speed.fast", 40), 40,
-                presenter::onSpeedChange);
-        return menu;
-    }
-
-    private JMenu buildBallMenu() {
-        JMenu menu = new JMenu(PROPERTIES.getMessage("menu.balls"));
-        addMenuItem(menu, PROPERTIES.getMessage("menu.balls.1"), 1,
-                presenter::onBallCountChange);
-        addMenuItem(menu, PROPERTIES.getMessage("menu.balls.2"), 2,
-                presenter::onBallCountChange);
-        addMenuItem(menu, PROPERTIES.getMessage("menu.balls.3"), 3,
-                presenter::onBallCountChange);
-        return menu;
-    }
-
-    private <T> void addMenuItem(JMenu menu, String label, T value, Consumer<T> action) {
-        JMenuItem item = new JMenuItem(label);
-        item.addActionListener(e -> action.accept(value));
-        menu.add(item);
     }
 
     private void bindKeys() {
@@ -266,6 +249,7 @@ public class MainView extends JFrame implements ViewInterface {
         registerAction("speedDownMinus", KeyStroke.getKeyStroke('-'), this::decreaseSpeed);
         registerAction("speedDownSub", KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0), this::decreaseSpeed);
         registerAction("togglePause", KeyStroke.getKeyStroke(KeyEvent.VK_P, 0), this::togglePause);
+        registerAction("addBall", KeyStroke.getKeyStroke(KeyEvent.VK_B, 0), this::addBall);
     }
 
     private void registerAction(String name, KeyStroke keyStroke, Runnable action) {
@@ -350,6 +334,12 @@ public class MainView extends JFrame implements ViewInterface {
         }
     }
 
+    private void addBall() {
+        if (presenter != null) {
+            presenter.onAddBall();
+        }
+    }
+
     private void startTimer() {
         uiTimer = new Timer(UI.REFRESH_MS, event -> refreshUi());
         uiTimer.start();
@@ -361,9 +351,27 @@ public class MainView extends JFrame implements ViewInterface {
         }
         applyPaddleMovement();
         GameSnapshot snapshot = presenter.getSnapshot();
+        handleLoss(snapshot);
         boardPanel.setSnapshot(snapshot);
         updateLabels(snapshot);
         boardPanel.repaint();
+    }
+
+    private void handleLoss(GameSnapshot snapshot) {
+        if (lastRunning && !snapshot.isRunning()) {
+            JOptionPane.showMessageDialog(this,
+                    PROPERTIES.getMessage("message.lose"),
+                    PROPERTIES.getMessage("dialog.title"),
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+        lastRunning = snapshot.isRunning();
+    }
+
+    private void showAboutDialog() {
+        JOptionPane.showMessageDialog(this,
+                PROPERTIES.getMessage("menu.about.author"),
+                PROPERTIES.getMessage("menu.about"),
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void updateLabels(GameSnapshot snapshot) {

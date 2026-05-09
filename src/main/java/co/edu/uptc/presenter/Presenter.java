@@ -28,6 +28,11 @@ public class Presenter implements PresenterInterface {
     }
 
     @Override
+    public void onAddBall() {
+        model.addBalls(1);
+    }
+
+    @Override
     public void onSpeedChange(int speedMs) {
         model.setSpeedMs(speedMs);
     }
