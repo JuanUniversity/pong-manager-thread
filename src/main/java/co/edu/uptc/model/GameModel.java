@@ -1,5 +1,6 @@
 package co.edu.uptc.model;
 
+import co.edu.uptc.dto.BallColor;
 import co.edu.uptc.dto.BallSnapshot;
 import co.edu.uptc.dto.GameSnapshot;
 import co.edu.uptc.interfaces.ModelInterface;
@@ -209,7 +210,9 @@ public class GameModel implements ModelInterface {
 
     private BallState createBall() {
         int dy = random.nextBoolean() ? 1 : -1;
-        return new BallState(nextBallId++, CENTER_X, CENTER_Y, -1, dy);
+        BallColor[] colors = BallColor.values();
+        BallColor color = colors[random.nextInt(colors.length)];
+        return new BallState(nextBallId++, CENTER_X, CENTER_Y, -1, dy, color);
     }
 
     private void addBall(BallState ball) {

@@ -1,5 +1,6 @@
 package co.edu.uptc.view;
 
+import co.edu.uptc.dto.BallColor;
 import co.edu.uptc.dto.BallSnapshot;
 import co.edu.uptc.dto.GameSnapshot;
 
@@ -70,12 +71,17 @@ public class BoardPanel extends JPanel {
     }
 
     private void drawTrailBall(Graphics2D g2, BallSnapshot ball) {
-        drawSquare(g2, ball.getOldX(), ball.getOldY(), BALL_TRAIL, 2);
-        drawSquare(g2, ball.getX(), ball.getY(), BALL_HEAD, 2);
+        BallColor color = ball.getColor();
+        Color trail = color == null ? BALL_TRAIL : color.getTrail();
+        Color head = color == null ? BALL_HEAD : color.getHead();
+        drawSquare(g2, ball.getOldX(), ball.getOldY(), trail, 2);
+        drawSquare(g2, ball.getX(), ball.getY(), head, 2);
     }
 
     private void drawSingleBall(Graphics2D g2, BallSnapshot ball) {
-        drawSquare(g2, ball.getX(), ball.getY(), BALL_HEAD, 1);
+        BallColor color = ball.getColor();
+        Color head = color == null ? BALL_HEAD : color.getHead();
+        drawSquare(g2, ball.getX(), ball.getY(), head, 1);
     }
 
     private void drawSquare(Graphics2D g2, int unitX, int unitY, Color color, int sizeUnits) {
