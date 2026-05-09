@@ -11,9 +11,17 @@ public interface ModelInterface {
 
     void setSpeedMs(int speedMs);
 
+    void increaseSpeed();
+
+    void decreaseSpeed();
+
     int getSpeedMs();
 
     void movePaddle(int delta);
+
+    void togglePause();
+
+    boolean isPaused();
 
     GameSnapshot getSnapshot();
 

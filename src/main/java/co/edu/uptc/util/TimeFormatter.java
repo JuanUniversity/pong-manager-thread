@@ -8,8 +8,9 @@ public final class TimeFormatter {
 
     public static String formatElapsed(Duration duration) {
         long seconds = duration == null ? 0 : duration.getSeconds();
-        long minutes = seconds / 60;
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
         long remaining = seconds % 60;
-        return String.format("%02d:%02d", minutes, remaining);
+        return String.format("%02d:%02d:%02d", hours, minutes, remaining);
     }
 }

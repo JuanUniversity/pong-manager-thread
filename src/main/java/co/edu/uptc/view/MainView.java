@@ -1,6 +1,7 @@
 package co.edu.uptc.view;
 
 import co.edu.uptc.config.PropertiesManager;
+import co.edu.uptc.dto.BallSnapshot;
 import co.edu.uptc.dto.GameSnapshot;
 import co.edu.uptc.interfaces.PresenterInterface;
 import co.edu.uptc.interfaces.ViewInterface;
@@ -30,19 +31,22 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class MainView extends JFrame implements ViewInterface {
     private static final PropertiesManager PROPERTIES = PropertiesManager.getInstance();
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("hh:mm:ss");
 
     private static final UIConstants UI = new UIConstants();
 
     private PresenterInterface presenter;
     private BoardPanel boardPanel;
-    private JLabel bounceValue;
     private JLabel startValue;
     private JLabel elapsedValue;
+    private JPanel ballStatsPanel;
     private Timer uiTimer;
     private boolean upPressed;
     private boolean downPressed;
@@ -119,9 +123,8 @@ public class MainView extends JFrame implements ViewInterface {
         Dimension infoPanelSize = new Dimension(UI.INFO_PANEL_WIDTH,
                 boardPanel.getPreferredSize().height);
                 
-        bounceValue = createValueLabel("0");
         startValue = createValueLabel("--:--:--");
-        elapsedValue = createValueLabel("00:00");
+        elapsedValue = createValueLabel("00:00:00");
         return new PanelBuilder(new BorderLayout())
                 .setBorder(UI.INFO_PADDING, UI.INFO_PADDING,
                         UI.INFO_PADDING, UI.INFO_PADDING)
@@ -140,14 +143,29 @@ public class MainView extends JFrame implements ViewInterface {
     }
 
     private JPanel buildInfoCenter() {
+        ballStatsPanel = buildBallStatsPanel();
         return new PanelBuilder()
-                .add(buildInfoRow(PROPERTIES.getMessage("label.bounces"), bounceValue))
+                .add(buildSectionTitle(PROPERTIES.getMessage("label.bounces")))
+                .add(ballStatsPanel)
                 .addSpacing(12)
                 .add(buildInfoRow(PROPERTIES.getMessage("label.startTime"), startValue))
                 .addSpacing(12)
                 .add(buildInfoRow(PROPERTIES.getMessage("label.elapsed"), elapsedValue))
                 .addGlue()
                 .build();
+    }
+
+    private JPanel buildBallStatsPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setAlignmentX(LEFT_ALIGNMENT);
+        return panel;
+    }
+
+    private JLabel buildSectionTitle(String text) {
+        JLabel title = new JLabel(text);
+        title.setAlignmentX(LEFT_ALIGNMENT);
+        return title;
     }
 
     private JPanel buildInfoFooter() {
@@ -198,8 +216,16 @@ public class MainView extends JFrame implements ViewInterface {
         JMenu menu = new JMenu(PROPERTIES.getMessage("menu.main"));
         menu.add(buildSpeedMenu());
         menu.add(buildBallMenu());
+        menu.addSeparator();
+        menu.add(buildPauseItem());
         bar.add(menu);
         return bar;
+    }
+
+    private JMenuItem buildPauseItem() {
+        JMenuItem item = new JMenuItem(PROPERTIES.getMessage("menu.pause"));
+        item.addActionListener(event -> togglePause());
+        return item;
     }
 
     private JMenu buildSpeedMenu() {
@@ -233,6 +259,25 @@ public class MainView extends JFrame implements ViewInterface {
     private void bindKeys() {
         registerKeyAction("moveUp", KeyEvent.VK_UP, -UI.PADDLE_STEP);
         registerKeyAction("moveDown", KeyEvent.VK_DOWN, UI.PADDLE_STEP);
+        registerAction("speedUpPlus", KeyStroke.getKeyStroke('+'), this::increaseSpeed);
+        registerAction("speedUpAdd", KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0), this::increaseSpeed);
+        registerAction("speedUpEq", KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, KeyEvent.SHIFT_DOWN_MASK),
+                this::increaseSpeed);
+        registerAction("speedDownMinus", KeyStroke.getKeyStroke('-'), this::decreaseSpeed);
+        registerAction("speedDownSub", KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0), this::decreaseSpeed);
+        registerAction("togglePause", KeyStroke.getKeyStroke(KeyEvent.VK_P, 0), this::togglePause);
+    }
+
+    private void registerAction(String name, KeyStroke keyStroke, Runnable action) {
+        InputMap inputMap = boardPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = boardPanel.getActionMap();
+        inputMap.put(keyStroke, name);
+        actionMap.put(name, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                action.run();
+            }
+        });
     }
 
     private void registerKeyAction(String name, int keyCode, int delta) {
@@ -287,6 +332,24 @@ public class MainView extends JFrame implements ViewInterface {
         }
     }
 
+    private void increaseSpeed() {
+        if (presenter != null) {
+            presenter.onIncreaseSpeed();
+        }
+    }
+
+    private void decreaseSpeed() {
+        if (presenter != null) {
+            presenter.onDecreaseSpeed();
+        }
+    }
+
+    private void togglePause() {
+        if (presenter != null) {
+            presenter.onTogglePause();
+        }
+    }
+
     private void startTimer() {
         uiTimer = new Timer(UI.REFRESH_MS, event -> refreshUi());
         uiTimer.start();
@@ -304,9 +367,23 @@ public class MainView extends JFrame implements ViewInterface {
     }
 
     private void updateLabels(GameSnapshot snapshot) {
-        bounceValue.setText(String.valueOf(snapshot.getBounceCount()));
         startValue.setText(formatStartTime(snapshot.getStartTime()));
         elapsedValue.setText(TimeFormatter.formatElapsed(snapshot.getElapsed()));
+        updateBallStats(snapshot.getBalls());
+    }
+
+    private void updateBallStats(List<BallSnapshot> balls) {
+        ballStatsPanel.removeAll();
+        List<BallSnapshot> sorted = new ArrayList<>(balls);
+        sorted.sort(Comparator.comparingInt(BallSnapshot::getId));
+        for (BallSnapshot ball : sorted) {
+            String label = PROPERTIES.getMessage("label.ball", ball.getId());
+            JLabel row = new JLabel(label + ": " + ball.getBounceCount());
+            row.setAlignmentX(LEFT_ALIGNMENT);
+            ballStatsPanel.add(row);
+        }
+        ballStatsPanel.revalidate();
+        ballStatsPanel.repaint();
     }
 
     private String formatStartTime(LocalTime time) {

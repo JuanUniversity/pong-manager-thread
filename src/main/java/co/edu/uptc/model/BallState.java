@@ -3,17 +3,19 @@ package co.edu.uptc.model;
 import co.edu.uptc.dto.BallSnapshot;
 
 public class BallState {
+    private final int id;
     private int x;
     private int y;
     private int oldX;
     private int oldY;
     private int dx;
     private int dy;
-    private int racketCollisions;
+    private int bounceCount;
     
     private boolean active;
     
-    public BallState(int x, int y, int dx, int dy, int racketCollisions) {
+    public BallState(int id, int x, int y, int dx, int dy) {
+        this.id = id;
         this.x = x;
         this.y = y;
         this.oldX = x;
@@ -21,6 +23,10 @@ public class BallState {
         this.dx = dx;
         this.dy = dy;
         this.active = true;
+    }
+
+    public synchronized int getId() {
+        return id;
     }
     
     public synchronized int getX() {
@@ -39,8 +45,8 @@ public class BallState {
         return dy;
     }
     
-    public synchronized int getRacketCollisions() {
-        return racketCollisions;
+    public synchronized int getBounceCount() {
+        return bounceCount;
     }
 
     public synchronized void setDirection(int dx, int dy) {
@@ -48,8 +54,8 @@ public class BallState {
         this.dy = dy;
     }
 
-    public synchronized void setRacketCollisions(int racketCollisions) {
-        this.racketCollisions = racketCollisions;
+    public synchronized void incrementBounceCount() {
+        bounceCount++;
     }
 
     public synchronized void advanceTo(int newX, int newY) {
@@ -60,7 +66,7 @@ public class BallState {
     }
 
     public synchronized BallSnapshot snapshot() {
-        return new BallSnapshot(x, y, oldX, oldY, racketCollisions);
+        return new BallSnapshot(id, x, y, oldX, oldY, bounceCount);
     }
 
     public synchronized boolean isActive() {

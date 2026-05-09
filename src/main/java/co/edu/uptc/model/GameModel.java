@@ -9,7 +9,6 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class GameModel implements ModelInterface {
     public static final int GRID_WIDTH = 60;
@@ -21,19 +20,26 @@ public class GameModel implements ModelInterface {
     private static final int CENTER_Y = GRID_HEIGHT / 2;
     private static final int MIN_SPEED_MS = 5;
     private static final int BALL_DELAY_STEP_MS = 1200;
+    private static final int SPEED_STEP_MS = 5;
+    private static final int SPEED_RAMP_INTERVAL_SEC = 5;
+    private static final int SPEED_RAMP_STEP_MS = 2;
 
     private final List<BallState> balls = new ArrayList<>();
     private final Object stateLock = new Object();
+    private final Object pauseLock = new Object();
     private final Random random = new Random();
-    private final AtomicInteger bounceCount = new AtomicInteger();
+    private int nextBallId = 1;
 
     private volatile boolean running;
-    private volatile int speedMs = 60;
+    private volatile boolean paused;
+    private volatile int baseSpeedMs = 60;
     private volatile int paddleY;
     private volatile int desiredBallCount = 1;
     private int ballDelayIndex;
     private LocalTime startTime;
     private Duration elapsedAtStop = Duration.ZERO;
+    private Duration pausedDuration = Duration.ZERO;
+    private LocalTime pauseStart;
 
     @Override
     public void resetGame() {
@@ -70,22 +76,49 @@ public class GameModel implements ModelInterface {
 
     @Override
     public void setSpeedMs(int speedMs) {
-        this.speedMs = Math.max(MIN_SPEED_MS, speedMs);
+        baseSpeedMs = Math.max(MIN_SPEED_MS, speedMs);
+    }
+
+    @Override
+    public void increaseSpeed() {
+        adjustSpeed(-SPEED_STEP_MS);
+    }
+
+    @Override
+    public void decreaseSpeed() {
+        adjustSpeed(SPEED_STEP_MS);
     }
 
     @Override
     public int getSpeedMs() {
-        return speedMs;
+        return computeEffectiveSpeed();
     }
 
     @Override
     public void movePaddle(int delta) {
-        if (!running) {
+        if (!running || paused) {
             return;
         }
         synchronized (stateLock) {
             paddleY = clampPaddle(paddleY + delta);
         }
+    }
+
+    @Override
+    public void togglePause() {
+        if (!running) {
+            return;
+        }
+        if (paused) {
+            resume();
+        } else {
+            pause();
+        }
+    }
+
+    @Override
+    public boolean isPaused() {
+        return paused;
     }
 
     @Override
@@ -112,12 +145,7 @@ public class GameModel implements ModelInterface {
         dy = resolveVerticalDirection(y, dy);
         int nextX = x + dx;
 
-        int resolvedDx = resolveHorizontal(nextX, nextY, dx);
-        if (isPaddleHit(nextX,nextY, dx)) {
-            int racketCollisions = ball.getRacketCollisions() + 1;
-            ball.setRacketCollisions(racketCollisions);
-            System.out.println(racketCollisions);
-        }
+        int resolvedDx = resolveHorizontal(ball, nextX, nextY, dx);
         nextX = x + resolvedDx;
         if (nextX >= GRID_WIDTH) {
             ball.advanceTo(GRID_WIDTH - 1, nextY);
@@ -125,19 +153,8 @@ public class GameModel implements ModelInterface {
             return;
         }
 
-
-        if (isFinalPaddleHit(nextX, nextY, ball)) {
-            ball.deactivate();
-            return;
-        }
-
         ball.setDirection(resolvedDx, dy);
         ball.advanceTo(nextX, nextY);
-
-    }
-
-    private boolean isFinalPaddleHit(int nextX, int nextY, BallState ball) {
-        return isPaddleHit(nextX, nextY, ball.getDx()) && balls.size() > 1 && ball.getRacketCollisions() > 2;
     }
 
     private int resolveVertical(int y, int dy) {
@@ -156,14 +173,14 @@ public class GameModel implements ModelInterface {
         return dy;
     }
 
-    private int resolveHorizontal(int nextX, int nextY, int dx) {
+    private int resolveHorizontal(BallState ball, int nextX, int nextY, int dx) {
         int resolvedDx = dx;
         if (nextX < 0) {
             resolvedDx = -dx;
         }
         if (isPaddleHit(nextX, nextY, dx)) {
             resolvedDx = -Math.abs(resolvedDx);
-            bounceCount.incrementAndGet();
+            ball.incrementBounceCount();
         }
         return resolvedDx;
     }
@@ -177,9 +194,12 @@ public class GameModel implements ModelInterface {
     }
 
     private void initState() {
-        bounceCount.set(0);
+        nextBallId = 1;
         paddleY = CENTER_Y - (PADDLE_HEIGHT / 2);
         ballDelayIndex = 0;
+        paused = false;
+        pausedDuration = Duration.ZERO;
+        pauseStart = null;
         synchronized (stateLock) {
             startTime = LocalTime.now();
             elapsedAtStop = Duration.ZERO;
@@ -189,7 +209,7 @@ public class GameModel implements ModelInterface {
 
     private BallState createBall() {
         int dy = random.nextBoolean() ? 1 : -1;
-        return new BallState(CENTER_X, CENTER_Y, -1, dy, 0);
+        return new BallState(nextBallId++, CENTER_X, CENTER_Y, -1, dy);
     }
 
     private void addBall(BallState ball) {
@@ -217,22 +237,14 @@ public class GameModel implements ModelInterface {
             return;
         }
         if (running) {
-            elapsedAtStop = elapsedFromStart();
+            elapsedAtStop = currentElapsed();
         }
         running = false;
+        resume();
         synchronized (balls) {
             for (BallState ball : balls) {
                 ball.deactivate();
             }
-        }
-    }
-
-    private Duration elapsedFromStart() {
-        synchronized (stateLock) {
-            if (startTime == null) {
-                return Duration.ZERO;
-            }
-            return Duration.between(startTime, LocalTime.now());
         }
     }
 
@@ -275,11 +287,77 @@ public class GameModel implements ModelInterface {
             paddleSnapshot = paddleY;
             startSnapshot = startTime;
             elapsedSnapshot = runningSnapshot && startSnapshot != null
-                    ? Duration.between(startSnapshot, LocalTime.now())
+                    ? currentElapsed()
                     : elapsedAtStop;
         }
         return new GameSnapshot(ballsSnapshot, paddleSnapshot, runningSnapshot,
-                bounceCount.get(), startSnapshot, elapsedSnapshot);
+                startSnapshot, elapsedSnapshot);
+    }
+
+    void waitIfPaused() {
+        synchronized (pauseLock) {
+            while (paused && running) {
+                try {
+                    pauseLock.wait();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
+    }
+
+    private void pause() {
+        if (paused) {
+            return;
+        }
+        paused = true;
+        synchronized (stateLock) {
+            pauseStart = LocalTime.now();
+        }
+    }
+
+    private void resume() {
+        if (!paused) {
+            return;
+        }
+        synchronized (stateLock) {
+            if (pauseStart != null) {
+                pausedDuration = pausedDuration.plus(Duration.between(pauseStart, LocalTime.now()));
+            }
+            pauseStart = null;
+        }
+        paused = false;
+        synchronized (pauseLock) {
+            pauseLock.notifyAll();
+        }
+    }
+
+    private void adjustSpeed(int delta) {
+        setSpeedMs(baseSpeedMs + delta);
+    }
+
+    private int computeEffectiveSpeed() {
+        Duration elapsed = currentElapsed();
+        long steps = elapsed.getSeconds() / SPEED_RAMP_INTERVAL_SEC;
+        int ramp = (int) (steps * SPEED_RAMP_STEP_MS);
+        int effective = baseSpeedMs - ramp;
+        return Math.max(MIN_SPEED_MS, effective);
+    }
+
+    private Duration currentElapsed() {
+        synchronized (stateLock) {
+            if (startTime == null) {
+                return Duration.ZERO;
+            }
+            Duration elapsed = Duration.between(startTime, LocalTime.now());
+            Duration pausedTotal = pausedDuration;
+            if (paused && pauseStart != null) {
+                pausedTotal = pausedTotal.plus(Duration.between(pauseStart, LocalTime.now()));
+            }
+            Duration result = elapsed.minus(pausedTotal);
+            return result.isNegative() ? Duration.ZERO : result;
+        }
     }
 
     private int clampPaddle(int value) {

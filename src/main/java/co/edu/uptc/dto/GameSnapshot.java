@@ -13,7 +13,6 @@ public class GameSnapshot {
     private final List<BallSnapshot> balls;
     private final int paddleY;
     private final boolean running;
-    private final int bounceCount;
     private final LocalTime startTime;
     private final Duration elapsed;
 }

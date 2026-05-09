@@ -17,6 +17,10 @@ public class BallTask implements Runnable {
             return;
         }
         while (state.isActive() && model.isRunning()) {
+            model.waitIfPaused();
+            if (!state.isActive() || !model.isRunning()) {
+                break;
+            }
             model.advanceBall(state);
             sleepForSpeed();
         }

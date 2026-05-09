@@ -33,8 +33,23 @@ public class Presenter implements PresenterInterface {
     }
 
     @Override
+    public void onIncreaseSpeed() {
+        model.increaseSpeed();
+    }
+
+    @Override
+    public void onDecreaseSpeed() {
+        model.decreaseSpeed();
+    }
+
+    @Override
     public void onMovePaddle(int delta) {
         model.movePaddle(delta);
+    }
+
+    @Override
+    public void onTogglePause() {
+        model.togglePause();
     }
 
     @Override

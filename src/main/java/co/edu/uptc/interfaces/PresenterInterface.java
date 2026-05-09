@@ -13,7 +13,13 @@ public interface PresenterInterface {
 
     void onSpeedChange(int speedMs);
 
+    void onIncreaseSpeed();
+
+    void onDecreaseSpeed();
+
     void onMovePaddle(int delta);
+
+    void onTogglePause();
 
     GameSnapshot getSnapshot();
 }
