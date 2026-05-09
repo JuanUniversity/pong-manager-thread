@@ -24,8 +24,6 @@ public class BoardPanel extends JPanel {
     private static final int PADDLE_X = GRID_WIDTH - 1;
 
     private static final Color BOARD_COLOR = new Color(0x242529);
-    private static final Color BALL_HEAD = new Color(0x66D0E6);
-    private static final Color BALL_TRAIL = new Color(0x2D7E9C);
     private static final Color PADDLE_COLOR = new Color(0xF39C12);
 
     private final Map<Integer, BallColor> ballColors = new HashMap<>();
