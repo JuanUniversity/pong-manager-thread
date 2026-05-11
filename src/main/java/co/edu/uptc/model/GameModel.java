@@ -20,7 +20,7 @@ public class GameModel implements ModelInterface {
     private static final int CENTER_Y = GRID_HEIGHT / 2;
     private static final int BALL_DELAY_STEP_MS = 1200;
     private static final int SPEED_RAMP_INTERVAL_SEC = 5;
-    private static final int[] SPEED_LEVELS_MS = {90, 75, 60, 50, 40};
+    private static final int[] SPEED_LEVELS_MS = { 90, 86, 82, 78, 74, 70, 66, 62, 58, 54, 50, 46, 43, 41, 40 };
     private static final int MAX_SPEED_LEVEL = SPEED_LEVELS_MS.length - 1;
     private static final int MAX_BALLS = 5;
 

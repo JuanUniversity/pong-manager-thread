@@ -1,0 +1,27 @@
+app:
+  title: "Manager Thread"
+panel:
+  title: "Game Info"
+label:
+  bounces: "Bounces"
+  ball: "Ball {0}"
+  startTime: "Start time"
+  elapsed: "Time"
+  maxBalls: "Max balls"
+  controls: "Controls"
+  control:
+    move: "Arrows: move paddle"
+    speed: "+/-: speed"
+    pause: "P: pause/resume"
+    addball: "B: add ball"
+button:
+  reset: "Reset"
+menu:
+  about:
+    title: "About"
+    author: "Juan Pablo Vargas Puerto"
+    info: "This is a Ping Pong video game developed by: "
+dialog:
+  title: "Game over"
+message:
+  lose: "You lost!"

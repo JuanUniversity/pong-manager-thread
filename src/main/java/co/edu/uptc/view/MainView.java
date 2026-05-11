@@ -47,7 +47,6 @@ public class MainView extends JFrame implements ViewInterface {
     private BoardPanel boardPanel;
     private JLabel startValue;
     private JLabel elapsedValue;
-    private JLabel speedLevelValue;
     private JLabel maxBallsValue;
     private JPanel ballStatsPanel;
     private Timer uiTimer;
@@ -129,7 +128,6 @@ public class MainView extends JFrame implements ViewInterface {
 
         startValue = createValueLabel("--:--:--");
         elapsedValue = createValueLabel("00:00:00");
-        speedLevelValue = createValueLabel("--");
         maxBallsValue = createValueLabel("--");
         return new PanelBuilder(new BorderLayout())
                 .setBorder(UI.INFO_PADDING, UI.INFO_PADDING,
@@ -157,8 +155,6 @@ public class MainView extends JFrame implements ViewInterface {
                 .add(buildInfoRow(PROPERTIES.getMessage("label.startTime"), startValue))
                 .addSpacing(12)
                 .add(buildInfoRow(PROPERTIES.getMessage("label.elapsed"), elapsedValue))
-                .addSpacing(12)
-                .add(buildInfoRow(PROPERTIES.getMessage("label.speedLevel"), speedLevelValue))
                 .addSpacing(12)
                 .add(buildInfoRow(PROPERTIES.getMessage("label.maxBalls"), maxBallsValue))
                 .addSpacing(12)
@@ -235,14 +231,14 @@ public class MainView extends JFrame implements ViewInterface {
 
     private JMenuBar buildMenuBar() {
         JMenuBar bar = new JMenuBar();
-        JMenu aboutMenu = new JMenu(PROPERTIES.getMessage("menu.about"));
+        JMenu aboutMenu = new JMenu(PROPERTIES.getMessage("menu.about.title"));
         aboutMenu.add(buildAboutItem());
         bar.add(aboutMenu);
         return bar;
     }
 
     private JMenuItem buildAboutItem() {
-        JMenuItem item = new JMenuItem(PROPERTIES.getMessage("menu.about.author"));
+        JMenuItem item = new JMenuItem(PROPERTIES.getMessage("menu.about.title"));
         item.addActionListener(event -> showAboutDialog());
         return item;
     }
@@ -376,22 +372,17 @@ public class MainView extends JFrame implements ViewInterface {
     }
 
     private void showAboutDialog() {
-        JOptionPane.showMessageDialog(this,
+        JOptionPane.showMessageDialog(this, PROPERTIES.getMessage("menu.about.info") +
                 PROPERTIES.getMessage("menu.about.author"),
-                PROPERTIES.getMessage("menu.about"),
+                PROPERTIES.getMessage("menu.about.title"),
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void updateLabels(GameSnapshot snapshot) {
         startValue.setText(formatStartTime(snapshot.getStartTime()));
         elapsedValue.setText(TimeFormatter.formatElapsed(snapshot.getElapsed()));
-        speedLevelValue.setText(formatSpeedLevel(snapshot));
         maxBallsValue.setText(String.valueOf(snapshot.getMaxBalls()));
         updateBallStats(snapshot.getBalls());
-    }
-
-    private String formatSpeedLevel(GameSnapshot snapshot) {
-        return snapshot.getSpeedLevel() + "/" + snapshot.getMaxSpeedLevels();
     }
 
     private void updateBallStats(List<BallSnapshot> balls) {

@@ -1,18 +1,27 @@
-app.title: Manager Thread
-panel.title: Game Info
-label.bounces: Rebotes
-label.ball: Pelota {0}
-label.startTime: Hora inicio
-label.elapsed: Tiempo
-label.speedLevel: Velocidad (nivel)
-label.maxBalls: Max pelotas
-label.controls: Controles
-label.control.move: Flechas: mover raqueta
-label.control.speed: +/-: velocidad
-label.control.pause: P: pausar/reanudar
-label.control.addball: B: agregar pelota
-button.reset: Reiniciar
-menu.about: About
-menu.about.author: Juan Pablo Vargas Puerto
-dialog.title: Juego terminado
-message.lose: Perdiste
+app:
+  title: "Manager Thread"
+panel:
+  title: "Game Info"
+label:
+  bounces: "Rebotes"
+  ball: "Pelota {0}"
+  startTime: "Hora inicio"
+  elapsed: "Tiempo"
+  maxBalls: "Max pelotas"
+  controls: "Controles"
+  control:
+    move: "Flechas: mover raqueta"
+    speed: "+/-: velocidad"
+    pause: "P: pausar/reanudar"
+    addball: "B: agregar pelota"
+button:
+  reset: "Reiniciar"
+menu:
+  about:
+    title: "About"
+    author: "Juan Pablo Vargas Puerto"
+    info: "Este es un videojuego de Ping Pong Desarrollado por: "
+dialog:
+  title: "Juego terminado"
+message:
+  lose: "¡Perdiste!"
