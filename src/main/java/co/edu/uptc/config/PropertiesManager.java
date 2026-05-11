@@ -4,7 +4,7 @@ import co.edu.uptc.configGlobal.ConfigGlobal;
 
 public class PropertiesManager {
     private static final String APP_PROPERTIES = "application.properties";
-    private static final String I18N_PATH_TEMPLATE = "i18n/messages_%s.properties";
+    private static final String I18N_PATH_TEMPLATE = "i18n/messages_%s.yaml";
     private static final String DEFAULT_LANGUAGE = "es";
     private static final String EXTERNAL_CONFIG_DIRECTORY = null;
     private static final PropertiesManager INSTANCE = new PropertiesManager();

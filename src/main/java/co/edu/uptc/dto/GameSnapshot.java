@@ -15,4 +15,7 @@ public class GameSnapshot {
     private final boolean running;
     private final LocalTime startTime;
     private final Duration elapsed;
+    private final int speedLevel;
+    private final int maxSpeedLevels;
+    private final int maxBalls;
 }

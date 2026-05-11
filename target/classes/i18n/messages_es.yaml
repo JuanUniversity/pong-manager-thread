@@ -1,0 +1,18 @@
+app.title: Manager Thread
+panel.title: Game Info
+label.bounces: Rebotes
+label.ball: Pelota {0}
+label.startTime: Hora inicio
+label.elapsed: Tiempo
+label.speedLevel: Velocidad (nivel)
+label.maxBalls: Max pelotas
+label.controls: Controles
+label.control.move: Flechas: mover raqueta
+label.control.speed: +/-: velocidad
+label.control.pause: P: pausar/reanudar
+label.control.addball: B: agregar pelota
+button.reset: Reiniciar
+menu.about: About
+menu.about.author: Juan Pablo Vargas Puerto
+dialog.title: Juego terminado
+message.lose: Perdiste

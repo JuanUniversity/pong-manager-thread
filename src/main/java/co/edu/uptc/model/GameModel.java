@@ -18,11 +18,11 @@ public class GameModel implements ModelInterface {
 
     private static final int CENTER_X = GRID_WIDTH / 2;
     private static final int CENTER_Y = GRID_HEIGHT / 2;
-    private static final int MIN_SPEED_MS = 5;
     private static final int BALL_DELAY_STEP_MS = 1200;
-    private static final int SPEED_STEP_MS = 5;
     private static final int SPEED_RAMP_INTERVAL_SEC = 5;
-    private static final int SPEED_RAMP_STEP_MS = 2;
+    private static final int[] SPEED_LEVELS_MS = {90, 75, 60, 50, 40};
+    private static final int MAX_SPEED_LEVEL = SPEED_LEVELS_MS.length - 1;
+    private static final int MAX_BALLS = 5;
 
     private final List<BallState> balls = new ArrayList<>();
     private final Object stateLock = new Object();
@@ -32,7 +32,7 @@ public class GameModel implements ModelInterface {
 
     private volatile boolean running;
     private volatile boolean paused;
-    private volatile int baseSpeedMs = 60;
+    private volatile int speedLevelIndex = 2;
     private volatile int paddleY;
     private volatile int desiredBallCount = 1;
     private int ballDelayIndex;
@@ -54,14 +54,18 @@ public class GameModel implements ModelInterface {
         if (!running || count <= 0) {
             return;
         }
-        for (int i = 0; i < count; i++) {
+        int allowed = Math.min(count, MAX_BALLS - currentBallCount());
+        if (allowed <= 0) {
+            return;
+        }
+        for (int i = 0; i < allowed; i++) {
             addBall(createBall());
         }
     }
 
     @Override
     public void setBallCount(int count) {
-        int sanitized = Math.max(1, count);
+        int sanitized = Math.max(1, Math.min(MAX_BALLS, count));
         desiredBallCount = sanitized;
         if (!running) {
             return;
@@ -76,17 +80,17 @@ public class GameModel implements ModelInterface {
 
     @Override
     public void setSpeedMs(int speedMs) {
-        baseSpeedMs = Math.max(MIN_SPEED_MS, speedMs);
+        speedLevelIndex = findClosestSpeedLevel(speedMs);
     }
 
     @Override
     public void increaseSpeed() {
-        adjustSpeed(-SPEED_STEP_MS);
+        speedLevelIndex = Math.min(MAX_SPEED_LEVEL, speedLevelIndex + 1);
     }
 
     @Override
     public void decreaseSpeed() {
-        adjustSpeed(SPEED_STEP_MS);
+        speedLevelIndex = Math.max(0, speedLevelIndex - 1);
     }
 
     @Override
@@ -290,8 +294,9 @@ public class GameModel implements ModelInterface {
                     ? currentElapsed()
                     : elapsedAtStop;
         }
+        int effectiveSpeedLevel = computeEffectiveSpeedLevel();
         return new GameSnapshot(ballsSnapshot, paddleSnapshot, runningSnapshot,
-                startSnapshot, elapsedSnapshot);
+                startSnapshot, elapsedSnapshot, effectiveSpeedLevel, MAX_SPEED_LEVEL + 1, MAX_BALLS);
     }
 
     void waitIfPaused() {
@@ -333,16 +338,33 @@ public class GameModel implements ModelInterface {
         }
     }
 
-    private void adjustSpeed(int delta) {
-        setSpeedMs(baseSpeedMs + delta);
-    }
-
     private int computeEffectiveSpeed() {
         Duration elapsed = currentElapsed();
         long steps = elapsed.getSeconds() / SPEED_RAMP_INTERVAL_SEC;
-        int ramp = (int) (steps * SPEED_RAMP_STEP_MS);
-        int effective = baseSpeedMs - ramp;
-        return Math.max(MIN_SPEED_MS, effective);
+        int rampLevels = (int) steps;
+        int effectiveIndex = Math.min(MAX_SPEED_LEVEL, speedLevelIndex + rampLevels);
+        return SPEED_LEVELS_MS[effectiveIndex];
+    }
+
+    private int computeEffectiveSpeedLevel() {
+        Duration elapsed = currentElapsed();
+        long steps = elapsed.getSeconds() / SPEED_RAMP_INTERVAL_SEC;
+        int rampLevels = (int) steps;
+        int effectiveIndex = Math.min(MAX_SPEED_LEVEL, speedLevelIndex + rampLevels);
+        return effectiveIndex + 1;
+    }
+
+    private int findClosestSpeedLevel(int speedMs) {
+        int bestIndex = 0;
+        int bestDiff = Math.abs(SPEED_LEVELS_MS[0] - speedMs);
+        for (int i = 1; i < SPEED_LEVELS_MS.length; i++) {
+            int diff = Math.abs(SPEED_LEVELS_MS[i] - speedMs);
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                bestIndex = i;
+            }
+        }
+        return bestIndex;
     }
 
     private Duration currentElapsed() {

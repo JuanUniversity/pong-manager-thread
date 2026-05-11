@@ -47,6 +47,8 @@ public class MainView extends JFrame implements ViewInterface {
     private BoardPanel boardPanel;
     private JLabel startValue;
     private JLabel elapsedValue;
+    private JLabel speedLevelValue;
+    private JLabel maxBallsValue;
     private JPanel ballStatsPanel;
     private Timer uiTimer;
     private boolean upPressed;
@@ -127,6 +129,8 @@ public class MainView extends JFrame implements ViewInterface {
 
         startValue = createValueLabel("--:--:--");
         elapsedValue = createValueLabel("00:00:00");
+        speedLevelValue = createValueLabel("--");
+        maxBallsValue = createValueLabel("--");
         return new PanelBuilder(new BorderLayout())
                 .setBorder(UI.INFO_PADDING, UI.INFO_PADDING,
                         UI.INFO_PADDING, UI.INFO_PADDING)
@@ -153,6 +157,10 @@ public class MainView extends JFrame implements ViewInterface {
                 .add(buildInfoRow(PROPERTIES.getMessage("label.startTime"), startValue))
                 .addSpacing(12)
                 .add(buildInfoRow(PROPERTIES.getMessage("label.elapsed"), elapsedValue))
+                .addSpacing(12)
+                .add(buildInfoRow(PROPERTIES.getMessage("label.speedLevel"), speedLevelValue))
+                .addSpacing(12)
+                .add(buildInfoRow(PROPERTIES.getMessage("label.maxBalls"), maxBallsValue))
                 .addSpacing(12)
                 .add(buildSectionTitle(PROPERTIES.getMessage("label.controls")))
                 .add(buildControlLine(PROPERTIES.getMessage("label.control.move")))
@@ -377,7 +385,13 @@ public class MainView extends JFrame implements ViewInterface {
     private void updateLabels(GameSnapshot snapshot) {
         startValue.setText(formatStartTime(snapshot.getStartTime()));
         elapsedValue.setText(TimeFormatter.formatElapsed(snapshot.getElapsed()));
+        speedLevelValue.setText(formatSpeedLevel(snapshot));
+        maxBallsValue.setText(String.valueOf(snapshot.getMaxBalls()));
         updateBallStats(snapshot.getBalls());
+    }
+
+    private String formatSpeedLevel(GameSnapshot snapshot) {
+        return snapshot.getSpeedLevel() + "/" + snapshot.getMaxSpeedLevels();
     }
 
     private void updateBallStats(List<BallSnapshot> balls) {
