@@ -3,27 +3,27 @@ package co.edu.uptc.interfaces;
 import co.edu.uptc.dto.GameSnapshot;
 
 public interface ModelInterface {
-    void resetGame();
+    public void resetGame();
 
-    void addBalls(int count);
+    public void addBalls(int count);
 
-    void setBallCount(int count);
+    public void setBallCount(int count);
 
-    void setSpeedMs(int speedMs);
+    public void setSpeedMs(int speedMs);
 
-    void increaseSpeed();
+    public void increaseSpeed();
 
-    void decreaseSpeed();
+    public void decreaseSpeed();
 
-    int getSpeedMs();
+    public int getSpeedMs();
 
-    void movePaddle(int delta);
+    public void movePaddle(int delta);
 
-    void togglePause();
+    public void togglePause();
 
-    boolean isPaused();
+    public boolean isPaused();
 
-    GameSnapshot getSnapshot();
+    public GameSnapshot getSnapshot();
 
-    boolean isRunning();
+    public boolean isRunning();
 }

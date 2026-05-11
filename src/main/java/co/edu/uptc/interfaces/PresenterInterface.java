@@ -3,25 +3,25 @@ package co.edu.uptc.interfaces;
 import co.edu.uptc.dto.GameSnapshot;
 
 public interface PresenterInterface {
-    void setModel(ModelInterface model);
+    public void setModel(ModelInterface model);
 
-    void onStart();
+    public void onStart();
 
-    void onReset();
+    public void onReset();
 
-    void onBallCountChange(int count);
+    public void onBallCountChange(int count);
 
-    void onAddBall();
+    public void onAddBall();
 
-    void onSpeedChange(int speedMs);
+    public void onSpeedChange(int speedMs);
 
-    void onIncreaseSpeed();
+    public void onIncreaseSpeed();
 
-    void onDecreaseSpeed();
+    public void onDecreaseSpeed();
 
-    void onMovePaddle(int delta);
+    public void onMovePaddle(int delta);
 
-    void onTogglePause();
+    public void onTogglePause();
 
-    GameSnapshot getSnapshot();
+    public GameSnapshot getSnapshot();
 }
